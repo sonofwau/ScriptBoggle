@@ -1,12 +1,15 @@
 <!DOCTYPE html>
 <html>
 <head>
-    <title>PageBoggle 1.1</title>
+    <title>Page Boggle 1.1</title>
     <style>
         table {
             border-collapse: collapse;
             width: 50%;
             /*margin: 24px auto; /**/
+        }
+        body {
+            background-color: rgb(103, 129, 153)
         }
         th, td {
             border: 2px solid black;
@@ -16,9 +19,10 @@
             /*padding: 36px;
             font-size: 72px;/**/
         }
-		body {
-			background-color: lightgray
-		}
+        label {
+            font-weight: 500;
+            font-size: 48
+        }
         button {
             margin: 24px auto;
             text-align: center;
@@ -48,7 +52,7 @@
     <!-- Page formatting starts here -->
     <span id="settings">
         <div class="centered-container">
-            <button onclick="createTable(6,6)">Start Boggle!</button>
+            <button onclick="createTable(6,6)">Start boggle!</button>
         </div>  
         <div class="centered-container">
             <label for="timerLength">Game length: </label>
@@ -70,20 +74,29 @@
                 <option value='"Times New Roman", Times, serif'>Times New Roman</option>
                 <option value='"Courier New", "Lucida Console", monospace'>Courier New</option>
                 <option value='"Comic Sans", cursive, sans-serif'>Comic Sans</option>
-                <option value='Arial, Helvetica, sans-serif'>Arial</option>
+                <option value='Consolas, Helvetica, sans-serif'>Consolas</option>
+            </select>
+            &emsp; &emsp;
+            <label for="gameType">Game type: </label>
+			<select id="gameType">
+                <option value='Super'>Super (6x6)</option>
+                <option value='Debug'>Debug</option>
             </select>
         </div>  
     </span>
 	<p id="timerDisplay" style="text-align: center; font-size: 60px"></p>
-	<p id="debug" style="text-align: center; font-size: 12px"></p>
+	<p id="debug" style="text-align: center; font-size: 38px"></p>
 	<div class="centered-container">
 		<table id="boggleBoard"></table>
 		
-		<select id="foundWords" size="38" style="display: none;"></select>
+		<select id="foundWords" size="38" style="display: none;" onclick="wordSelected()">
+            <option value='[clear]'>[clear]</option>
+        </select>
 	</div>
 
     <!-- Page script starts here -->
     <script>
+        //document.getElementById("debug").innerHTML = `test<br>test`
 		const wordList = {
             "gis":["Gismo","Gismos","Gisarme","Gisarmes","Gist","Gists","Gisant","Gisants"],
             "blu":["Blunderingly","Blundered","Blundering","Blunderer","Blunderinglys","Bluetongue","Bluetongues","Bluebonnet","Bluebonnets","Bluenose","Bluenosed","Bluenoses","Bluethroat","Bluethroats","Bluecoat","Bluecoats","Blurbist","Blurbists","Blunger","Blungers","Blue","Bluer","Bluest","Bluely","Blueness","Blues","Blued","Blueing","Bluing","Blunder","Blunders","Bluebill","Bluebills","Blur","Blurs","Blurred","Blurring","Blurringly","Bluet","Bluets","Blubber","Blubbered","Blubbering","Blubbers","Bludge","Bludged","Bludging","Bludger","Blub","Blubbed","Blubbing","Bluff","Bluffly","Bluffness","Bluffs","Bluffed","Bluffing","Bluffer","Blurt","Blurted","Blurting","Blurts","Blurter","Blunderbuss","Blunderbusss","Bluejack","Bluejacks","Bluewood","Bluewoods","Bluster","Blustered","Blustering","Blusterer","Blusterous","Blustery","Blusters","Bluepoint","Bluepoints","Blubberer","Blubberers","Bluish","Bluishness","Blueish","Bluebell","Bluebells","Bluejacket","Bluejackets","Bluey","Blusher","Blushers","Bluebird","Bluebirds","Bluegrass","Bluegrasss","Blucher","Bluchers","Blushingly","Blushful","Blushinglys","Blushed","Blushing","Blushes","Blurry","Blurrier","Blurriest","Blurrily","Blurriness","Bluestocking","Bluestockings","Blusteringly","Blusteringlys","Bludgeon","Bludgeons","Bludgeoned","Bludgeoning","Blueprinter","Blueprinters","Bluestem","Bluestems","Blueweed","Blueweeds","Blueberry","Blueberrys","Bluebottle","Bluebottles","Blurredly","Blurb","Blurbs","Blurbed","Blurbing","Blubbery","Bluefishes","Bluefishess","Bluestone","Bluestones","Blush","Blushs","Blunt","Bluntly","Bluntness","Blunted","Blunting","Blunts","Bluegill","Bluegills","Bluetick","Blueticks","Blueprint","Blueprints","Blueprinted","Blueprinting","Bluecap","Bluecaps","Bluefish","Bluefishs","Blubberingly","Blunge","Blunging"],
@@ -3032,12 +3045,34 @@
             ["E","I","I","L","S","T"], ["E","I","L","P","S","T"], ["E","I","O","-","-","-"], ["E","M","T","T","T","O"], ["E","N","S","S","S","U"], ["G","O","R","R","V","W"],
             ["H","I","R","S","T","V"], ["H","O","P","R","S","T"], ["I","P","R","S","Y","Y"], ["J","K","Qu","W","X","Z"], ["N","O","O","T","U","W"], ["O","O","O","T","T","U"]
         ]
-		
+		const foundWords = {}
+        const board = {
+            c00:"O", c10:"N", c20:"C", c30:"B", c40:"T", c50:"S",
+            c01:"V", c11:"I", c21:"Y", c31:"O", c41:"U", c51:"R",
+            c02:"A", c12:"M", c22:"A", c32:"R", c42:"K", c52:"I",
+            c03:"G", c13:"E", c23:"T", c33:"I", c43:"N", c53:"G",
+            c04:"Y", c14:"Th", c24:"-", c34:"S", c44:"E", c54:"T",
+            c05:"B", c15:"O", c25:"G", c35:"G", c45:"L", c55:"E"
+        }
+
         function diceGenerator () {
             const randomIndex = Math.floor(Math.random() * diceList.length)
             const letter = diceList[randomIndex][Math.floor(Math.random() * 6)]
             diceList.splice(randomIndex, 1)
             return letter
+        }
+
+        function wordSelected () {
+            let word = document.getElementById('foundWords').value
+            Object.keys(board).forEach(coords => {
+                let cell = document.getElementById(coords)
+                cell.style.color = "White"
+            })
+            if (word == "[clear]") { return }
+            foundWords[word].forEach(coords => {
+                let cell = document.getElementById(coords)
+                cell.style.color = "Red"
+            })
         }
 
         function startCountdown (duration) {
@@ -3059,95 +3094,69 @@
                         }
                     }
                     updateFoundWordsList()
-					
-                    display.textContent = 'Time\'s up!';
+                    display.style.display = "none"
 
                 }
             }, 1000);
         }
-		
-		function findNextLetter (cx, cy, prev, combo, word) {
-			if (!combo || !prev) {
-				combo = ""
-			}
 			
-			for (let ix=-1; ix < 2; ix++) {
-				if (ix+cx < 0 || ix+cx > 5) {
-					continue
-				}
-				for (let iy=-1; iy < 2; iy++) {
-					if (iy+cy < 0 || iy+cy > 5) {
-						continue
-					}
-					let coord = []
-					const testcoord = `c${ix+cx}${iy+cy}`
-					if (prev.length != 0) {
-						if (prev.includes(testcoord)) {
-							continue
-						}
-					}
-					if (prev.length != 0) {
-						coord = [...prev]
-					}
-					coord.push(`c${ix+cx}${iy+cy}`)
-					
-					if (!word) {
-						if (coord.length < 3) {
-							nextSquares(ix+cx, iy+cy, coord, combo)
-						} else {
-							if (coordList.includes(coord)) {
-								continue
-							}
-
-							if (document.getElementById(coord[0]).textContent == null || document.getElementById(coord[1]).textContent == null || document.getElementById(coord[2]).textContent == null) {
-								continue
-							}
-							let combo = document.getElementById(coord[0]).textContent + document.getElementById(coord[1]).textContent + document.getElementById(coord[2]).textContent
-							
-							if (comboList[combo]) {
-								comboList[combo].push(coord)
-							} else {
-								comboList[combo] = [coord]
-							}
-							coordList.push(coord)
-						}
-					} else {
-						combo+=document.getElementById(testcoord).textContent
-						if (combo.length < word.length) {
-							// Check next square
-							nextSquares(ix+cx, iy+cy, coord, combo)
-						} 
-
-						if (combo.length == word.length) {
-							// Verify accuracy and push
-							document.getElementById("debug").textContent = combo
-						}
-					}
-				}
-			}
-		}
-		
 		function updateFoundWordsList () {
 			const foundWordsSelect = document.getElementById("foundWords")
 			foundWordsSelect.style.display = ""
-			for (const key in wordList) {
-                if (comboList[key.toUpperCase()]) {
-                    for (const value in wordList[key]) {
-                        let newOption = document.createElement("option")
-                        newOption.value = wordList[key][value]
-                        newOption.text = wordList[key][value]
-                        foundWordsSelect.appendChild(newOption)
-						for (const coord in comboList[key.toUpperCase()]) {
-							//findNextLetter(comboList[key.toUpperCase()][coord][2][1], comboList[key.toUpperCase()][coord][2][2], [], "", wordList[key][value])
-							//document.getElementById("debug").textContent = comboList[key.toUpperCase()][coord][2]
-						}
+
+            Object.keys(comboList).forEach(combo => {
+                wordList[combo].forEach(word => {
+                    comboList[combo].forEach(coords => {
+                        if (word in foundWords) { return false}
+                        let testNext = checkNextLetter(combo, coords, word)
+                    })
+                })
+            })
+            let count = 0
+            let longestWord = ""
+            Object.keys(foundWords).sort().forEach(word => {
+                let newOption = document.createElement("option")
+                newOption.value = word
+                newOption.text = word
+                foundWordsSelect.appendChild(newOption)
+                if (longestWord.length < word.length) {
+                    longestWord = word
+                }
+                count++
+            })
+            document.getElementById("debug").innerHTML = `ScriptBob found ${count} words. <br>The longest word it found was ${longestWord}.`
+		}/**/
+
+        function checkNextLetter (combo, coords, word) {
+            let cx = parseInt(coords[coords.length-1][1])
+            let cy = parseInt(coords[coords.length-1][2])
+            for (let x=cx-1; x<cx+2; x++) {
+                if (x<0 || x>5) { continue }
+                for (let y=cy-1; y<=cy+1; y++) {
+                    let testCoords = `c${x}${y}`
+                    if (y<0 || y>5 || coords.includes(testCoords)) { continue }
+                    let testCombo = combo+board[testCoords]
+                    let newCoords = [...coords]
+                    newCoords.push(testCoords)
+                    if (testCombo.toLowerCase() == word.toLowerCase()) {
+                        foundWords[word] = newCoords
+                        return true
                     }
-                }   
-			}
-		}
+                    if (!word.match(new RegExp(testCombo,`i`))) {
+                        continue
+                    }
+                    let testNext = checkNextLetter(testCombo, newCoords, word)
+
+                    if (testNext == true) {
+                        return true
+                    }
+                }
+            }
+            return false
+        }
 		
 		function possCombos () {
-			function nextSquares (cx, cy, prev, combo, word) {
+			function nextSquares (cx, cy, prev) {
 				for (let ix=-1; ix < 2; ix++) {
 					if (ix+cx < 0 || ix+cx > 5) {
 						continue
@@ -3168,10 +3177,10 @@
 						}
 						coord.push(`c${ix+cx}${iy+cy}`)
 						
-						if (coord.length < 3 && !word) {
+						if (coord.length < 3) {
 							nextSquares(ix+cx, iy+cy, coord)
 						}
-						if (coord.length == 3 && !word) {
+						if (coord.length == 3) {
                             if (coordList.includes(coord)) {
                                 continue
                             }
@@ -3180,10 +3189,23 @@
                                 continue
                             }
 
-                            let combo = document.getElementById(coord[0]).textContent + document.getElementById(coord[1]).textContent + document.getElementById(coord[2]).textContent
+                            let combo = (document.getElementById(coord[0]).textContent + document.getElementById(coord[1]).textContent + document.getElementById(coord[2]).textContent).toLowerCase()
                             
+                            if (combo.match(/-/) || !(combo in wordList)) { 
+                                continue 
+                            }
+
                             if (comboList[combo]) {
-                                comboList[combo].push(coord)
+                                let cTest = false
+                                comboList[combo].forEach(tCoord => {
+                                    if (JSON.stringify(tCoord) == JSON.stringify(coord)) {
+                                        cTest = true
+                                        return false
+                                    }
+                                })
+                                if (cTest == false) {
+                                    comboList[combo].push(coord)
+                                }
                             } else {
                                 comboList[combo] = [coord]
                             }
@@ -3216,8 +3238,12 @@
                 const row = table.insertRow();
                 for (let j = 0; j < cols; j++) {
                     const cell = row.insertCell();
-                    cell.textContent = diceGenerator();
-                    cell.id = `c${j}${i}`
+                    let coords = `c${j}${i}`
+                    if (document.getElementById('gameType').value == "Super") {
+                        board[coords] = diceGenerator() 
+                    }
+                    cell.textContent = board[coords]
+                    cell.id = coords
 					cell.style.fontFamily = `${document.getElementById('fontSelection').value}`
                     cell.style.fontSize = `${parseInt(document.getElementById('fontSize').value, 10)}px`
                     cell.style.padding = `${parseInt(document.getElementById('fontSize').value, 10)/2}px`
