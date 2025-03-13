@@ -297,7 +297,7 @@
     <!-- Page formatting starts here -->
     <span id="settings">
         <div class="centered-container">
-            <startButton onclick="createTable(6,6)">Boggle!</startButton>
+            <startButton id="startButton" onclick="buttonClick()">On your mark!</startButton>
         </div>  
         <div class="centered-container">
             <label for="timerLength">Game length: </label>
@@ -330,7 +330,7 @@
             </select>
         </div>  
     </span>
-	<p id="timerDisplay" style="text-align: center; font-size: 60px"></p>
+	<p id="timerDisplay" style="text-align: center; font-size: 48px;"></p>
     <p id="wordSearch" style="text-align: center; display: none;">
         <label id="searchLabel" for="WordSearchBox" style="font-size: 30px">Word search: </label>
         <input type="text" id="wordSearchBox" name="wordSearchBox" oninput="newWordSearch()">
@@ -342,11 +342,11 @@
 		
 		<select id="foundWords" size="44" style="display: none;" onclick="wordSelected()">
             <option value='[clear]'>[clear]</option>
+            <!--<option value='Spell'>Spell</option>-->
         </select>
         <div class="scrollable-container">
             <p id="wordDefinition" style="font-size: 24px; "></p>
         </div>
-        <!--<iframe id="dictionaryPage" src="https://www.merriam-webster.com/dictionary/aviator" width="600" height="750" style="display: none;"></iframe>-->
 	</div>
 	<p id="debug" style="text-align: center; font-size: 38px; display: none;"></p>
 
@@ -3309,6 +3309,7 @@
             c04:"Y", c14:"Th", c24:"-", c34:"S", c44:"E", c54:"T",
             c05:"B", c15:"O", c25:"G", c35:"G", c45:"L", c55:"E"
         }
+		let clickTracker = 0
 
         function diceGenerator () {
             const randomIndex = Math.floor(Math.random() * diceList.length)
@@ -3351,6 +3352,23 @@
             }
             searchResults.textContent = word + " cannot be found on the board"
         }
+		
+		function buttonClick () {
+			switch (clickTracker) {
+				case 0 : 
+					document.getElementById('startButton').textContent = "Get set!"
+					clickTracker++;
+					break;
+				case 1 : 
+					document.getElementById('startButton').textContent = "Boggle!"
+					clickTracker++;
+					break;
+				default : 
+					createTable(6,6);
+					break;
+				
+			}
+		}
 
         function defineWord () {
             let word = document.getElementById("foundWords").value
@@ -3411,7 +3429,7 @@
             document.getElementById('boggleContainer').className = "left-container"
             definitionDiv.innerHTML = ``; // Clear previous result
             let text = `<h2>Definition of "${word}":</h2><ul>`;
-            definitionDiv.innerHTML = ``; // Clear previous result
+			let nearDefinitionsDictionary = {}
 
             if (!Array.isArray(data) || data.length === 0 || typeof data[0] !== 'object') {
                 definitionDiv.innerHTML = `<p>No definition found for "<strong>${word}</strong>".</p>`;
@@ -3427,7 +3445,6 @@
 
             // Extract definitions (typically in `shortdef` field)
             for (i=0; i<data.length; i++) {
-                //const partOfSpeech = data[i].fl
                 const definitions = data[i].shortdef;
                 const def = data[i].def
 
@@ -3435,9 +3452,14 @@
                     text = `<p>No definition available for "<strong>${word}</strong>".</p>`;
                     return;
                 }
-
+				
+				let testWord = data[i].meta.id.replace(/:[0-9]/i,"")
+				if (testWord.toLowerCase() != word.toLowerCase()) {
+					nearDefinitionsDictionary[data[i].meta.id] = data[i].fl
+					continue
+				}
+				
                 let lbsResults = lbsSearch(data[i])
-                //let lbsResults = lbsSearch(data[i])
                 // Format and display results
                 if (!lbsResults) {
                     text += `<li>${data[i].meta.id} - ${data[i].fl}<ul>`
@@ -3449,6 +3471,9 @@
                     `</li>`;
                     text += `</ul>`
             }
+			for (const key in nearDefinitionsDictionary) {
+				text += `<li>${key} (${nearDefinitionsDictionary[key]})</li>`
+			}
             text += `</ul>`
             definitionDiv.innerHTML = text
         }
